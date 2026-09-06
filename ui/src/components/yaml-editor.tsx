@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import Editor from '@monaco-editor/react'
 import { IconCheck, IconEdit, IconLoader, IconX } from '@tabler/icons-react'
-import { formatHex } from 'culori'
 import * as yaml from 'js-yaml'
-import { editor as monacoEditor } from 'monaco-editor'
+import type { editor as monacoEditor } from 'monaco-editor'
+import { useTranslation } from 'react-i18next'
 
 import { ResourceType, ResourceTypeMap } from '@/types/api'
+import { MonacoEditor } from '@/lib/monaco-loader'
+import {
+  defineMonacoBackgroundThemes,
+  useMonacoBackgroundColor,
+} from '@/lib/monaco-theme'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 import { useAppearance } from './appearance-provider'
+import { ErrorBoundary } from './error-boundary'
 
 interface YamlEditorProps<T extends ResourceType> {
   /** The YAML content to edit */
@@ -32,36 +38,37 @@ interface YamlEditorProps<T extends ResourceType> {
   isSaving?: boolean
   /** Custom class name for the card */
   className?: string
+  fillHeight?: boolean
 }
 
 export function YamlEditor<T extends ResourceType>({
   value,
   readOnly = false,
   showControls = true,
-  title = 'YAML Configuration',
+  title,
   onChange,
   onSave,
   onCancel,
   isSaving = false,
   className,
+  fillHeight = false,
 }: YamlEditorProps<T>) {
-  const [isEditing, setIsEditing] = useState(true)
+  const { t } = useTranslation()
+  const [isEditing, setIsEditing] = useState(false)
   const [editorValue, setEditorValue] = useState(value)
   const [isValidYaml, setIsValidYaml] = useState(true)
   const [validationError, setValidationError] = useState<string>('')
   const { actualTheme, colorTheme } = useAppearance()
   const editorRef = useRef<monacoEditor.IStandaloneCodeEditor | null>(null)
-  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  const getCardBackgroundColor = () => {
-    const card = getComputedStyle(document.documentElement)
-      .getPropertyValue('--card')
-      .trim()
-    if (!card) {
-      return actualTheme === 'dark' ? '#18181b' : '#ffffff'
-    }
-    return formatHex(card) || (actualTheme === 'dark' ? '#18181b' : '#ffffff')
-  }
+  const validationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
+  const themeMode = actualTheme === 'dark' ? 'dark' : 'light'
+  const backgroundColor = useMonacoBackgroundColor(
+    '--card',
+    themeMode,
+    colorTheme
+  )
 
   // Update editor value when value prop changes
   useEffect(() => {
@@ -86,7 +93,9 @@ export function YamlEditor<T extends ResourceType>({
       // Delay showing the error message
       validationTimeoutRef.current = setTimeout(() => {
         setValidationError(
-          error instanceof Error ? error.message.split('\n')[0] : 'Invalid YAML'
+          error instanceof Error
+            ? error.message.split('\n')[0]
+            : t('common.messages.invalidYaml', 'Invalid YAML')
         )
       }, 1000) // 1 second delay only for error message display
     }
@@ -97,7 +106,7 @@ export function YamlEditor<T extends ResourceType>({
         clearTimeout(validationTimeoutRef.current)
       }
     }
-  }, [editorValue])
+  }, [editorValue, t])
 
   const handleEditorChange = (value: string | undefined) => {
     const newValue = value || ''
@@ -134,12 +143,13 @@ export function YamlEditor<T extends ResourceType>({
   }
 
   const effectiveReadOnly = readOnly || !isEditing
+  const editorTitle = title ?? t('common.fields.yamlConfiguration')
 
   return (
-    <Card className={className}>
+    <Card className={cn(fillHeight && 'min-h-0 flex-1', className)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="space-y-1">
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>{editorTitle}</CardTitle>
         </div>
         <div className="flex items-center gap-4">
           {showControls && (
@@ -156,7 +166,7 @@ export function YamlEditor<T extends ResourceType>({
                     ) : (
                       <IconCheck className="w-4 h-4 mr-2" />
                     )}
-                    Save
+                    {t('common.actions.save')}
                   </Button>
                   <Button
                     size="sm"
@@ -165,7 +175,7 @@ export function YamlEditor<T extends ResourceType>({
                     disabled={isSaving}
                   >
                     <IconX className="w-4 h-4 mr-2" />
-                    Cancel
+                    {t('common.actions.cancel')}
                   </Button>
                 </>
               ) : (
@@ -176,84 +186,88 @@ export function YamlEditor<T extends ResourceType>({
                   disabled={readOnly}
                 >
                   <IconEdit className="w-4 h-4 mr-2" />
-                  Edit
+                  {t('common.actions.edit')}
                 </Button>
               )}
             </div>
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+      <CardContent className={cn(fillHeight && 'min-h-0 flex-1')}>
+        <div
+          className={cn(
+            'space-y-2',
+            fillHeight && 'flex h-full min-h-0 flex-col'
+          )}
+        >
           {!isValidYaml && validationError && (
             <div className="px-3 py-2 bg-destructive/10 border border-destructive/20 rounded-md">
               <p className="text-sm text-destructive">{validationError}</p>
             </div>
           )}
-          <div className="overflow-hidden h-[calc(100dvh-300px)]">
-            <Editor
-              key={`yaml-editor-${colorTheme}-${actualTheme}`} // Force remount on theme change
-              language="yaml"
-              theme={
-                actualTheme === 'dark'
-                  ? `custom-dark-${colorTheme}`
-                  : `custom-vs-${colorTheme}`
-              }
-              value={editorValue}
-              beforeMount={(monaco) => {
-                const cardBgColor = getCardBackgroundColor()
-                monaco.editor.defineTheme(`custom-dark-${colorTheme}`, {
-                  base: 'vs-dark',
-                  inherit: true,
-                  rules: [],
-                  colors: {
-                    'editor.background': cardBgColor,
-                  },
-                })
-                monaco.editor.defineTheme(`custom-vs-${colorTheme}`, {
-                  base: 'vs',
-                  inherit: true,
-                  rules: [],
-                  colors: {
-                    'editor.background': cardBgColor,
-                  },
-                })
-              }}
-              onChange={handleEditorChange}
-              onMount={handleEditorDidMount}
-              options={{
-                readOnly: effectiveReadOnly,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                folding: true,
-                renderLineHighlight: effectiveReadOnly ? 'none' : 'line',
-                tabSize: 2,
-                insertSpaces: true,
-                fontSize: 14,
-                fontFamily:
-                  "'Maple Mono',Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
-                acceptSuggestionOnCommitCharacter: false,
-                acceptSuggestionOnEnter: 'off',
-                quickSuggestions: false,
-                suggestOnTriggerCharacters: false,
-                wordBasedSuggestions: 'off',
-                // Disable unnecessary features for YAML editing
-                parameterHints: { enabled: false },
-                hover: { enabled: false },
-                contextmenu: false,
-                // Better scrolling behavior
-                smoothScrolling: true,
-                cursorSmoothCaretAnimation: 'on',
-                multiCursorModifier: 'alt',
-                accessibilitySupport: 'off',
-                quickSuggestionsDelay: 500,
-                links: false,
-                colorDecorators: false,
-              }}
-            />
+          <div
+            className={cn(
+              'overflow-hidden h-[calc(100dvh-300px)]',
+              fillHeight && 'h-auto min-h-0 flex-1'
+            )}
+          >
+            <ErrorBoundary>
+              <MonacoEditor
+                height={fillHeight ? '100%' : undefined}
+                key={`yaml-editor-${colorTheme}-${actualTheme}-${backgroundColor}`}
+                language="yaml"
+                theme={
+                  actualTheme === 'dark'
+                    ? `custom-dark-${colorTheme}`
+                    : `custom-vs-${colorTheme}`
+                }
+                value={editorValue}
+                loading={
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    {t('common.messages.loadingEditor', 'Loading editor...')}
+                  </div>
+                }
+                beforeMount={(monaco) => {
+                  defineMonacoBackgroundThemes(monaco, {
+                    darkThemeName: `custom-dark-${colorTheme}`,
+                    lightThemeName: `custom-vs-${colorTheme}`,
+                    backgroundColor,
+                  })
+                }}
+                onChange={handleEditorChange}
+                onMount={handleEditorDidMount}
+                options={{
+                  readOnly: effectiveReadOnly,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  wordWrap: 'on',
+                  lineNumbers: 'on',
+                  folding: true,
+                  renderLineHighlight: effectiveReadOnly ? 'none' : 'line',
+                  tabSize: 2,
+                  insertSpaces: true,
+                  fontSize: 14,
+                  fontFamily:
+                    "'Maple Mono',Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
+                  acceptSuggestionOnCommitCharacter: false,
+                  acceptSuggestionOnEnter: 'off',
+                  quickSuggestions: false,
+                  suggestOnTriggerCharacters: false,
+                  wordBasedSuggestions: 'off',
+                  parameterHints: { enabled: false },
+                  hover: { enabled: false },
+                  contextmenu: false,
+                  smoothScrolling: true,
+                  cursorSmoothCaretAnimation: 'on',
+                  multiCursorModifier: 'alt',
+                  accessibilitySupport: 'off',
+                  quickSuggestionsDelay: 500,
+                  links: false,
+                  colorDecorators: false,
+                }}
+              />
+            </ErrorBoundary>
           </div>
         </div>
       </CardContent>

@@ -1,21 +1,23 @@
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Link } from 'react-router-dom'
 
 import { Gateway } from '@/types/gateway'
+import { createSearchFilter } from '@/lib/k8s'
 import { formatDate } from '@/lib/utils'
 import { ResourceTable } from '@/components/resource-table'
 
-export function GatewayListPage() {
-  // Define column helper outside of any hooks
-  const columnHelper = createColumnHelper<Gateway>()
+const filter = createSearchFilter<Gateway>((gw) => gw.metadata?.name)
 
+const columnHelper = createColumnHelper<Gateway>()
+
+export function GatewayListPage() {
   const columns = useMemo(
     () => [
       columnHelper.accessor('metadata.name', {
         header: 'Name',
         cell: ({ row }) => (
-          <div className="font-medium text-blue-500 hover:underline">
+          <div className="font-medium app-link">
             <Link
               to={`/gateways/${row.original.metadata!.namespace}/${row.original.metadata!.name}`}
             >
@@ -39,12 +41,8 @@ export function GatewayListPage() {
         },
       }),
     ],
-    [columnHelper]
+    []
   )
-
-  const filter = useCallback((ns: Gateway, query: string) => {
-    return ns.metadata!.name!.toLowerCase().includes(query)
-  }, [])
 
   return (
     <ResourceTable

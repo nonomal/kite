@@ -4,24 +4,24 @@
 
 ## 基础配置
 
-| 参数               | 描述                                               | 默认值                |
-| ------------------ | -------------------------------------------------- | --------------------- |
-| `replicaCount`     | 副本数量                                           | `1`                   |
-| `image.repository` | 容器镜像仓库                                       | `ghcr.io/zxh326/kite` |
-| `image.pullPolicy` | 镜像拉取策略                                       | `IfNotPresent`        |
-| `image.tag`        | 镜像标签。如果设置，将覆盖 chart 的 `appVersion`。 | `""`                  |
-| `imagePullSecrets` | 私有镜像仓库的拉取密钥                             | `[]`                  |
-| `nameOverride`     | 覆盖 chart 名称                                    | `""`                  |
-| `fullnameOverride` | 覆盖完整名称                                       | `""`                  |
-| `debug`            | 启用调试模式                                       | `false`               |
-| `basePath`         | 应用的基础路径，详见安装文档中的说明。     | `""`                 |
+| 参数               | 描述                                               | 默认值                  |
+| ------------------ | -------------------------------------------------- | ----------------------- |
+| `replicaCount`     | 副本数量                                           | `1`                     |
+| `image.repository` | 容器镜像仓库                                       | `ghcr.io/kite-org/kite` |
+| `image.pullPolicy` | 镜像拉取策略                                       | `IfNotPresent`          |
+| `image.tag`        | 镜像标签。如果设置，将覆盖 chart 的 `appVersion`。 | `""`                    |
+| `imagePullSecrets` | 私有镜像仓库的拉取密钥                             | `[]`                    |
+| `nameOverride`     | 覆盖 chart 名称                                    | `""`                    |
+| `fullnameOverride` | 覆盖完整名称                                       | `""`                    |
+| `debug`            | 启用调试模式                                       | `false`                 |
+| `basePath`         | 应用的基础路径，详见安装文档中的说明。             | `""`                    |
 
 ## 认证与安全
 
 | 参数                   | 描述                                                       | 默认值                                               |
 | ---------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
 | `anonymousUserEnabled` | 启用匿名用户访问，拥有完全管理员权限。生产环境请谨慎使用。 | `false`                                              |
-| `jwtSecret`            | 用于签名 JWT 令牌的密钥。生产环境请修改此值。              | `"kite-default-jwt-secret-key-change-in-production"` |
+| `jwtSecret`            | 用于签名 JWT 令牌的密钥。为空时首次启动自动生成。         | `""`                                                 |
 | `encryptKey`           | 用于加密敏感数据的密钥。生产环境请修改此值。               | `"kite-default-encryption-key-change-in-production"` |
 | `host`                 | 应用程序的主机名                                           | `""`                                                 |
 

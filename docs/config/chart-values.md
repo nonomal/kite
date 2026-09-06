@@ -4,24 +4,24 @@ This document describes all available configuration options for the Kite Helm Ch
 
 ## Basic Configuration
 
-| Parameter          | Description                                                | Default               |
-| ------------------ | ---------------------------------------------------------- | --------------------- |
-| `replicaCount`     | Number of replicas                                         | `1`                   |
-| `image.repository` | Container image repository                                 | `ghcr.io/zxh326/kite` |
-| `image.pullPolicy` | Image pull policy                                          | `IfNotPresent`        |
-| `image.tag`        | Image tag. If set, will override the chart's `appVersion`. | `""`                  |
-| `imagePullSecrets` | Image pull secrets for private repositories                | `[]`                  |
-| `nameOverride`     | Override chart name                                        | `""`                  |
-| `fullnameOverride` | Override full name                                         | `""`                  |
-| `debug`            | Enable debug mode                                          | `false`               |
-| `basePath`         | Base path where Kite is served. See notes below. | `""`                 |
+| Parameter          | Description                                                | Default                 |
+| ------------------ | ---------------------------------------------------------- | ----------------------- |
+| `replicaCount`     | Number of replicas                                         | `1`                     |
+| `image.repository` | Container image repository                                 | `ghcr.io/kite-org/kite` |
+| `image.pullPolicy` | Image pull policy                                          | `IfNotPresent`          |
+| `image.tag`        | Image tag. If set, will override the chart's `appVersion`. | `""`                    |
+| `imagePullSecrets` | Image pull secrets for private repositories                | `[]`                    |
+| `nameOverride`     | Override chart name                                        | `""`                    |
+| `fullnameOverride` | Override full name                                         | `""`                    |
+| `debug`            | Enable debug mode                                          | `false`                 |
+| `basePath`         | Base path where Kite is served. See notes below.           | `""`                    |
 
 ## Authentication & Security
 
 | Parameter              | Description                                                                              | Default                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `anonymousUserEnabled` | Enable anonymous user access with full admin privileges. Use with caution in production. | `false`                                              |
-| `jwtSecret`            | Secret key used for signing JWT tokens. Change this in production.                       | `"kite-default-jwt-secret-key-change-in-production"` |
+| `jwtSecret`            | Secret key for signing JWT tokens. Auto-generated on first boot if empty.                | `""`                                                 |
 | `encryptKey`           | Secret key used for encrypting sensitive data. Change this in production.                | `"kite-default-encryption-key-change-in-production"` |
 | `host`                 | Hostname for the application                                                             | `""`                                                 |
 
@@ -52,6 +52,25 @@ This document describes all available configuration options for the Kite Helm Ch
 | Parameter   | Description                              | Default |
 | ----------- | ---------------------------------------- | ------- |
 | `extraEnvs` | List of additional environment variables | `[]`    |
+
+## Application Configuration
+
+Kite supports loading cluster, OAuth/LDAP, and RBAC configuration from a YAML config file. When enabled, managed sections become read-only in the UI.
+
+Available in Kite `v0.10.0` and later.
+
+See [Configuration File](./config-file) for the full config file format, usage examples, and reference.
+
+| Parameter               | Description                                                                    | Default |
+| ----------------------- | ------------------------------------------------------------------------------ | ------- |
+| `config.enabled`        | Enable configuration file mode                                                 | `false` |
+| `config.existingSecret` | Name of an existing Secret containing a `config.yaml` key. Recommended approach. | `""`    |
+| `config.superUser`      | Inline super user configuration (created on first startup only)                | `{}`    |
+| `config.clusters`       | Inline cluster configurations (when no existingSecret)                         | `[]`    |
+| `config.oauth`          | Inline OAuth provider configurations                                           | `[]`    |
+| `config.ldap`           | Inline LDAP configuration                                                      | `{}`    |
+| `config.rbac.roles`     | Inline RBAC role definitions                                                   | `[]`    |
+| `config.rbac.roleMapping` | Inline RBAC role mappings                                                    | `[]`    |
 
 ## Service Account Configuration
 

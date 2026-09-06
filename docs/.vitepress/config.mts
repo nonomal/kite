@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "Kite",
-  description: "A modern, intuitive Kubernetes dashboard",
+  description: "A modern Kubernetes dashboard",
 
   sitemap: {
     hostname: "https://kite.zzde.me",
@@ -27,16 +27,17 @@ export default defineConfig({
       lang: "zh-CN",
       link: "/zh/",
       title: "Kite",
-      description: "一个现代的、直观的 Kubernetes 仪表盘",
+      description: "一个现代 Kubernetes 仪表盘",
       themeConfig: {
         nav: [
           { text: "首页", link: "/zh/" },
           { text: "指南", link: "/zh/guide/" },
           { text: "配置", link: "/zh/config/" },
+          { text: "API", link: "/zh/api/authentication" },
           { text: "常见问题", link: "/zh/faq" },
         ],
         editLink: {
-          pattern: "https://github.com/zxh326/kite/tree/main/docs/:path",
+          pattern: "https://github.com/kite-org/kite/tree/main/docs/:path",
           text: "在 GitHub 上编辑此页面",
         },
       },
@@ -63,7 +64,7 @@ export default defineConfig({
     },
     langMenuLabel: "Language",
     editLink: {
-      pattern: "https://github.com/zxh326/kite/tree/main/docs/:path",
+      pattern: "https://github.com/kite-org/kite/tree/main/docs/:path",
       text: "Edit this page on GitHub",
     },
 
@@ -71,6 +72,7 @@ export default defineConfig({
       { text: "Home", link: "/" },
       { text: "Guide", link: "/guide/" },
       { text: "Configuration", link: "/config/" },
+      { text: "API", link: "/api/authentication" },
       { text: "FAQ", link: "/faq" },
     ],
 
@@ -92,6 +94,7 @@ export default defineConfig({
             { text: "Prometheus Setup", link: "/config/prometheus-setup" },
             { text: "Managed K8s Auth", link: "/config/managed-k8s-auth" },
             { text: "Environment Variables", link: "/config/env" },
+            { text: "Configuration File", link: "/config/config-file" },
             { text: "Chart Values", link: "/config/chart-values" },
           ],
         },
@@ -102,7 +105,10 @@ export default defineConfig({
             { text: "Related Resources", link: "/guide/related-resources" },
             { text: "Logs", link: "/guide/logs" },
             { text: "Monitor", link: "/guide/monitoring" },
+            { text: "Helm Management", link: "/guide/helm-management" },
+            { text: "AI Assistant", link: "/guide/ai-assistant" },
             { text: "Web Terminal", link: "/guide/web-terminal" },
+            { text: "Kite Cluster Agent", link: "/guide/kite-cluster-agent" },
             { text: "Resource History", link: "/guide/resource-history" },
             { text: "Custom Sidebar", link: "/guide/custom-sidebar" },
             { text: "Kube Proxy", link: "/guide/kube-proxy" },
@@ -111,6 +117,28 @@ export default defineConfig({
         {
           text: "FAQ",
           link: "/faq",
+        },
+      ],
+      "/api/": [
+        {
+          text: "Authentication",
+          link: "/api/authentication",
+        },
+        {
+          text: "Resources",
+          link: "/api/resources",
+        },
+        {
+          text: "Cluster Management",
+          link: "/api/cluster-management",
+        },
+        {
+          text: "RBAC Management",
+          link: "/api/rbac-management",
+        },
+        {
+          text: "User Management",
+          link: "/api/user-management",
         },
       ],
       "/zh/": [
@@ -130,6 +158,7 @@ export default defineConfig({
             { text: "Prometheus 设置", link: "/zh/config/prometheus-setup" },
             { text: "托管 K8s 认证", link: "/zh/config/managed-k8s-auth" },
             { text: "环境变量", link: "/zh/config/env" },
+            { text: "配置文件", link: "/zh/config/config-file" },
             { text: "Chart Values", link: "/zh/config/chart-values" },
           ],
         },
@@ -140,7 +169,10 @@ export default defineConfig({
             { text: "相关资源", link: "/zh/guide/related-resources" },
             { text: "日志", link: "/zh/guide/logs" },
             { text: "监控", link: "/zh/guide/monitoring" },
+            { text: "Helm 管理", link: "/zh/guide/helm-management" },
+            { text: "AI 助手", link: "/zh/guide/ai-assistant" },
             { text: "Web 终端", link: "/zh/guide/web-terminal" },
+            { text: "Kite Cluster Agent", link: "/zh/guide/kite-cluster-agent" },
             { text: "资源历史", link: "/zh/guide/resource-history" },
             { text: "自定义侧边栏", link: "/zh/guide/custom-sidebar" },
             { text: "Kube Proxy", link: "/zh/guide/kube-proxy" },
@@ -151,9 +183,31 @@ export default defineConfig({
           link: "/zh/faq",
         },
       ],
+      "/zh/api/": [
+        {
+          text: "认证",
+          link: "/zh/api/authentication",
+        },
+        {
+          text: "资源操作",
+          link: "/zh/api/resources",
+        },
+        {
+          text: "集群管理",
+          link: "/zh/api/cluster-management",
+        },
+        {
+          text: "RBAC 管理",
+          link: "/zh/api/rbac-management",
+        },
+        {
+          text: "用户管理",
+          link: "/zh/api/user-management",
+        },
+      ],
     },
 
-    socialLinks: [{ icon: "github", link: "https://github.com/zxh326/kite" }],
+    socialLinks: [{ icon: "github", link: "https://github.com/kite-org/kite" }],
 
     footer: {
       message: "Released under the Apache License.",

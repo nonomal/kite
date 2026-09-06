@@ -2,12 +2,13 @@ import { useCallback, useMemo, useState } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as yaml from 'js-yaml'
 import { CustomResourceDefinition } from 'kubernetes-types/apiextensions/v1'
-import { get } from 'lodash'
 import { Eye } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 
 import { CustomResource, ResourceType } from '@/types/api'
 import { useResource } from '@/lib/api'
+import { createSearchFilter, getPrinterColumnValue } from '@/lib/k8s'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,13 +20,24 @@ import {
 import { ResourceTable } from '@/components/resource-table'
 import { YamlEditor } from '@/components/yaml-editor'
 
+const searchQueryFilter = createSearchFilter<CustomResource>(
+  (cr) => cr.metadata?.name,
+  (cr) => cr.metadata?.namespace,
+  (cr) => cr.kind,
+  (cr) => cr.apiVersion,
+  (cr) => (cr.metadata?.labels ? Object.keys(cr.metadata.labels) : undefined),
+  (cr) => (cr.metadata?.labels ? Object.values(cr.metadata.labels) : undefined)
+)
+
+const columnHelper = createColumnHelper<CustomResource>()
+
 export function CRListPage() {
+  const { t } = useTranslation()
   const [isYamlDialogOpen, setIsYamlDialogOpen] = useState(false)
   const [yamlContent, setYamlContent] = useState('')
   const { crd } = useParams<{ crd: string }>()
   const { data: crdData, isLoading: isLoadingCRD } = useResource('crds', crd!)
 
-  const columnHelper = createColumnHelper<CustomResource>()
   const handleViewYaml = useCallback((crd: CustomResourceDefinition) => {
     setYamlContent(yaml.dump(crd, { indent: 2 }))
     setIsYamlDialogOpen(true)
@@ -56,7 +68,7 @@ export function CRListPage() {
             : `/crds/${crd}/${resource.metadata.name}`
 
           return (
-            <div className="font-medium text-blue-500 hover:underline">
+            <div className="font-medium app-link">
               <Link to={path}>{resource.metadata.name}</Link>
             </div>
           )
@@ -66,50 +78,38 @@ export function CRListPage() {
     const additionalColumns =
       crdData?.spec.versions[0].additionalPrinterColumns?.map(
         (printerColumn) => {
-          const jsonPath = printerColumn.jsonPath.startsWith('.')
-            ? printerColumn.jsonPath.slice(1)
-            : printerColumn.jsonPath
+          const jsonPath = printerColumn.jsonPath
 
-          return columnHelper.accessor((row) => get(row, jsonPath), {
-            id: jsonPath || printerColumn.name,
-            header: printerColumn.name,
-            cell: ({ getValue }) => {
-              const type = printerColumn.type
-              const value = getValue()
-              if (!value) {
-                return <span className="text-sm text-muted-foreground">-</span>
-              }
-              if (type === 'date') {
+          return columnHelper.accessor(
+            (row) => getPrinterColumnValue(row, jsonPath),
+            {
+              id: jsonPath || printerColumn.name,
+              header: printerColumn.name,
+              cell: ({ getValue }) => {
+                const type = printerColumn.type
+                const value = getValue()
+                if (!value) {
+                  return (
+                    <span className="text-sm text-muted-foreground">-</span>
+                  )
+                }
+                if (type === 'date') {
+                  return (
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(String(value))}
+                    </span>
+                  )
+                }
                 return (
-                  <span className="text-sm text-muted-foreground">
-                    {formatDate(value)}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{value}</span>
                 )
-              }
-              return (
-                <span className="text-sm text-muted-foreground">{value}</span>
-              )
-            },
-          })
+              },
+            }
+          )
         }
       )
     return [...baseColumns, ...(additionalColumns ?? [])]
-  }, [columnHelper, crd, crdData?.spec.versions])
-
-  const searchQueryFilter = useCallback((cr: CustomResource, query: string) => {
-    const searchFields = [
-      cr.metadata?.name || '',
-      cr.metadata?.namespace || '',
-      cr.kind || '',
-      cr.apiVersion || '',
-      ...(cr.metadata?.labels ? Object.keys(cr.metadata.labels) : []),
-      ...(cr.metadata?.labels ? Object.values(cr.metadata.labels) : []),
-    ]
-
-    return searchFields.some((field) =>
-      field.toLowerCase().includes(query.toLowerCase())
-    )
-  }, [])
+  }, [crd, crdData?.spec.versions])
 
   if (isLoadingCRD) {
     return <div>Loading...</div>
@@ -134,7 +134,8 @@ export function CRListPage() {
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              YAML Configuration: {crdData?.metadata?.name ?? 'Unknown'}
+              {t('common.fields.yamlConfiguration')}:{' '}
+              {crdData?.metadata?.name ?? t('status.unknown')}
             </DialogTitle>
           </DialogHeader>
           <YamlEditor

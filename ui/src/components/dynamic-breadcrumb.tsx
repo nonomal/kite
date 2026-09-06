@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 
+import { getResourceCatalogEntry } from '@/lib/resource-catalog'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,34 +28,33 @@ export function DynamicBreadcrumb() {
       return breadcrumbs
     }
 
-    // Resource name mappings
-    const resourceLabels: Record<string, string> = {
-      pods: t('nav.pods'),
-      deployments: t('nav.deployments'),
-      services: t('nav.services'),
-      configmaps: t('nav.configMaps'),
-      secrets: t('nav.secrets'),
-      ingresses: t('nav.ingresses'),
-      gateways: t('nav.gateways'),
-      httproutes: t('nav.httproutes'),
-      jobs: t('nav.jobs'),
-      daemonsets: t('nav.daemonsets'),
-      statefulsets: t('nav.statefulsets'),
-      namespaces: t('nav.namespaces'),
-      pvcs: t('sidebar.short.pvcs'),
-      crds: t('nav.crds'),
-      crs: t('nav.customResources'),
-      horizontalpodautoscalers: t('nav.horizontalpodautoscalers'),
-    }
-
     // Helper function to create breadcrumb item
-    const createBreadcrumb = (
+    const createResourceBreadcrumb = (
       label: string,
       href?: string
-    ): BreadcrumbSegment => ({
-      label: resourceLabels[label] || label,
-      href,
-    })
+    ): BreadcrumbSegment => {
+      if (label === 'pvcs') {
+        return { label: t('sidebar.short.pvcs'), href }
+      }
+
+      const resource = getResourceCatalogEntry(label)
+      if (!resource) {
+        return { label, href }
+      }
+
+      const titleKey = 'titleKey' in resource ? resource.titleKey : undefined
+      const shortLabel =
+        'shortLabel' in resource ? resource.shortLabel : undefined
+
+      return {
+        label: titleKey
+          ? t(titleKey, {
+              defaultValue: shortLabel || resource.pluralLabel,
+            })
+          : shortLabel || resource.pluralLabel,
+        href,
+      }
+    }
 
     // Helper function to get safe link for segments
     const getSafeLink = (index: number): string | undefined => {
@@ -75,10 +75,22 @@ export function DynamicBreadcrumb() {
       }
     }
 
-    // Generate breadcrumbs for each path segment
-    pathSegments.forEach((segment, index) => {
+    const shouldHideLastSegment =
+      pathSegments[0] === 'crds'
+        ? pathSegments.length >= 3
+        : pathSegments.length >= 2
+    const visibleSegments = shouldHideLastSegment
+      ? pathSegments.slice(0, -1)
+      : pathSegments
+
+    // Generate breadcrumbs for each visible path segment
+    visibleSegments.forEach((segment, index) => {
       const href = getSafeLink(index)
-      breadcrumbs.push(createBreadcrumb(segment, href))
+      breadcrumbs.push(
+        index === 0
+          ? createResourceBreadcrumb(segment, href)
+          : { label: segment, href }
+      )
     })
 
     return breadcrumbs
@@ -93,7 +105,7 @@ export function DynamicBreadcrumb() {
           <div key={index} className="flex items-center">
             {index > 0 && <BreadcrumbSeparator />}
             <BreadcrumbItem>
-              {crumb.href ? (
+              {crumb.href && index < breadcrumbs.length - 1 ? (
                 <BreadcrumbLink asChild>
                   <Link to={crumb.href}>{crumb.label}</Link>
                 </BreadcrumbLink>
